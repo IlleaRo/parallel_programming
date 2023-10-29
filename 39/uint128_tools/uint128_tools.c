@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 __uint128_t read(const char *buf, unsigned long size) {
 
     if (!buf) {
@@ -21,4 +23,11 @@ __uint128_t read(const char *buf, unsigned long size) {
     }
 
     return x;
+}
+
+void print_uint128(__uint128_t num) {
+    if (num > 9) {
+        print_uint128(num / 10);
+    }
+    putchar((char)('0' + num % 10));
 }

@@ -22,7 +22,17 @@ int main(int argc, char* argv[]) {
     xyz_t xyz;
 
     if (!find_xyz(N, &xyz)) {
-        printf("X = %d\nY = %d\nZ = %d\n", xyz.x, xyz.y, xyz.z);
+        printf("X = ");
+        print_uint128(xyz.x);
+
+        printf("\nY = ");
+        print_uint128(xyz.y);
+
+        printf("\nZ = ");
+        print_uint128(xyz.z);
+
+        printf("\n");
+
         exit(EXIT_SUCCESS);
     }
     else {
