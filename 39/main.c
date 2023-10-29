@@ -20,8 +20,9 @@ int main(int argc, char* argv[]) {
     }
 
     xyz_t xyz;
+    int err_code;
 
-    if (!find_xyz(N, &xyz)) {
+    if (!(err_code = find_xyz(N, &xyz))) {
         printf("X = ");
         print_uint128(xyz.x);
 
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_SUCCESS);
     }
     else {
-        printf("Something went wrong...\n");
+        printf("Something went wrong...\nError code: %d\n", err_code);
         exit(EXIT_FAILURE);
     }
 }

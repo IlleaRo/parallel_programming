@@ -1,6 +1,7 @@
 #include "find_xyz.h"
 
 #include <math.h>
+#include <limits.h>
 
 int is_int(long double num) {
     return num == (int) num;
@@ -65,5 +66,8 @@ int is_square(unsigned long long num) {
             }
         }
         xyz->x++;
+        if (xyz->x == ULLONG_MAX) {
+            return 1;
+        }
     }
 }
