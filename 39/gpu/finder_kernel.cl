@@ -16,32 +16,35 @@ int is_square(unsigned long num) {
 
 
 __kernel
-void finder_CL(__global unsigned long* xyz_buf, __global unsigned long *N) {
+void finder_CL(__global unsigned long* xyz_buf, __global unsigned long *N, unsigned long phase) {
     int globalId = get_global_id(0);
     unsigned long x, y, z;
 
-    int count_squares = 0;
-    x = *N + 1 + globalId;
-    printf("X for learn = %lu", x);
+    int count_squares = 0, tmp;
+    x = phase + 1 + globalId;
+
     for (y = *N + 1; y < ULONG_MAX && y < x; y++) {
         if (xyz_buf[0] != -1) {
             break;
         }
+
+        tmp = 0;
+
+        if (is_square(x + y)) {
+            tmp++;
+        }
+
+        if (is_square(x - y)) {
+            tmp++;
+        }
+
             
         for (z = *N + 1; z < ULONG_MAX && z < y; z++) {
-            count_squares = 0;
-
             if (xyz_buf[0] != ULONG_MAX) {
                 break;
             }
 
-            if (is_square(x + y)) {
-                count_squares++;
-            }
-
-            if (is_square(x - y)) {
-                count_squares++;
-            }
+            count_squares = tmp;
 
             if (is_square(x + z)) {
                 count_squares++;

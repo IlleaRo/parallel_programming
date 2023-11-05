@@ -116,6 +116,8 @@ int main(int argc,const char* argv[]) {
     /* устанавливаем параметр */
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&memobj);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&mem_for_N);
+    ret = clSetKernelArg(kernel, 2, sizeof(cl_ulong), (void *)&N);
+
     if (ret != CL_SUCCESS) {
         fprintf(stderr,"Error with clSetKernelArg(%d)!\n", ret);
         exit(EXIT_FAILURE);
@@ -132,20 +134,24 @@ int main(int argc,const char* argv[]) {
             break;
         }
         
-        ret = clEnqueueWriteBuffer(command_queue, mem_for_N, CL_TRUE, 0, sizeof(cl_ulong), &i, 0, NULL, NULL);
-        printf("progress: %ld\n", i);
-        sleep(2);
+        ret = clSetKernelArg(kernel, 2, sizeof(cl_ulong), (void *)&i);
     }
     
 
-
-    printf("X = %lu\n", mem[0]);
-    printf("Y = %lu\n", mem[1]);
-    printf("Z = %lu\n", mem[2]);
+    if (mem[0] != ULONG_MAX) {
+        printf("X = %lu\n", mem[0]);
+        printf("Y = %lu\n", mem[1]);
+        printf("Z = %lu\n", mem[2]);
+    }
+    else {
+        printf("Something went wrong!\n");
+    }
 
 
     // Clean up and wait for all the comands to complete.
 
+    ret = clFlush(command_queue);
+    ret = clFinish(command_queue);
 
     ret = clReleaseKernel(kernel);
     ret = clReleaseProgram(program);
@@ -154,8 +160,6 @@ int main(int argc,const char* argv[]) {
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
 
-    ret = clFlush(command_queue);
-    ret = clFinish(command_queue);
 
 
     free(mem);
