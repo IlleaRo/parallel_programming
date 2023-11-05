@@ -1,1 +1,9 @@
-39. Найти целые числа x>y>z, большие заданного N, такие, что 5 из 6 значений вида x+y, x-y, x+z, x-z, y+z, y-z являются полными квадратами других чисел.
+# Реализация на CPU
+## Сборка
+```makefile
+gcc -std=c11 -fopenmp main.c finder_xyz/find_xyz.c -o finder -lm
+```
+## Запуск
+```shell
+./finder <N>
+```

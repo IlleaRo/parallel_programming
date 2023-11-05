@@ -3,11 +3,11 @@
 
 typedef struct xyz
 {
-    unsigned long long x;
-    unsigned long long y;
-    unsigned long long z;
+    unsigned long x;
+    unsigned long y;
+    unsigned long z;
 } xyz_t;
 
-int find_xyz(unsigned long long, xyz_t *);
+int find_xyz(unsigned long, xyz_t *);
 
 #endif //FINDER_FIND_XYZ_H

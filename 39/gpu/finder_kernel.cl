@@ -77,5 +77,4 @@ void finder_CL(__global unsigned long* xyz_buf, __global unsigned long *N, unsig
             }
         }
     }
-
 }
