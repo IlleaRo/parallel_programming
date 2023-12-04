@@ -16,7 +16,8 @@ int is_square(unsigned long num) {
 
 
 __kernel
-void finder_CL(__global unsigned long* xyz_buf, __global unsigned long *N, unsigned long phase) {
+void finder_CL(__global unsigned long* xyz_buf, __global unsigned long* N, unsigned long phase) {
+    xyz_buf[0] = 1001;
     int globalId = get_global_id(0);
     unsigned long x, y, z;
 
