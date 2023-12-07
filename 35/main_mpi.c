@@ -17,9 +17,9 @@ void printArray(float *array, unsigned long k, unsigned long m, unsigned long n)
 }
 
 void calculate_temperature(float *area, unsigned long k, unsigned long m, unsigned long n) {
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < k - 1; ++j) {
-            for (int l = 1; l < m - 1; ++l) {
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = 0; j < k; ++j) {
+            for (int l = 0; l < m; ++l) {
                 if (i > 0 && j > 0 && l > 0 && i < n - 1 && j < k - 1 && l < m - 1) {
                     //typical
                     area[i * (k * m) + j * m + l] = 0.167f * (
@@ -35,6 +35,9 @@ void calculate_temperature(float *area, unsigned long k, unsigned long m, unsign
                     );
                 } else if (i == 0 && j > 0 && l > 0 && j < k - 1 && l < m - 1) {
                     //upper side n = 0
+                    if (j == k / 2 && l == m / 2) {
+                        continue;
+                    }
                     area[j * m + l] = 0.2f * (
                             // height neighbours
                             area[(k * m) + j * m + l] +
@@ -57,51 +60,88 @@ void calculate_temperature(float *area, unsigned long k, unsigned long m, unsign
                             // width neighbours
                             area[i * (k * m) + j * m + 1]
                     );
-                } else if () {
+                } else if (i > 0 && j > 0 && i < n - 1 && j < k - 1 && l == m - 1) {
                     //back side m = m - 1
+                    area[i * (k * m) + j * m + m - 1] = 0.2f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + j * m + m - 1] +
+                            area[(i + 1) * (k * m) + j * m + m - 1] +
+                            // length neighbours
+                            area[i * (k * m) + (j - 1) * m + m - 1] +
+                            area[i * (k * m) + (j + 1) * m + m - 1] +
+                            // width neighbours
+                            area[i * (k * m) + j * m + m - 2]
+                    );
+                } else if (i > 0 && j == 0 && l > 0 && i < n - 1 && l < m - 1) {
+                    //left side k = 0
+                    area[i * (k * m) + l] = 0.2f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + l] +
+                            area[(i + 1) * (k * m) + l] +
+                            // length neighbours
+                            area[i * (k * m) + m + l] +
+                            // width neighbours
+                            area[i * (k * m) + l + 1] +
+                            area[i * (k * m) + l - 1]
+                    );
+                } else if (i > 0 && j == k - 1 && l > 0 && i < n - 1 && l < m - 1) {
+                    //right side k = k - 1
+                    area[i * (k * m) + (k - 1) * m + l] = 0.2f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + (k - 1) * m + l] +
+                            area[(i + 1) * (k * m) + (k - 1) * m + l] +
+                            // length neighbours
+                            area[i * (k * m) + (k - 2) * m + l] +
+                            // width neighbours
+                            area[i * (k * m) + (k - 1) * m + l - 1] +
+                            area[i * (k * m) + (k - 1) * m + l - 1]
+                    );
+                } else if (i > 0 && j == 0 && l == 0 && i < n - 1) {
+                    area[i * (k * m)] = 0.25f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m)] +
+                            area[(i + 1) * (k * m)] +
+                            // length neighbours
+                            area[i * (k * m) + m] +
+                            // width neighbours
+                            area[i * (k * m) + 1]
+                    );
+                } else if (i > 0 && j == 0 && l == m - 1 && i < n - 1) {
+                    area[i * (k * m) + m - 1] = 0.25f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + m - 1] +
+                            area[(i + 1) * (k * m) + m - 1] +
+                            // length neighbours
+                            area[i * (k * m) + m] +
+                            // width neighbours
+                            area[i * (k * m) + m - 2]
+                    );
+                } else if (i > 0 && j == k - 1 && l == 0 && i < n - 1) {
+                    area[i * (k * m) + (k - 1) * m] = 0.25f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + (k - 1) * m] +
+                            area[(i + 1) * (k * m) + (k - 1) * m] +
+                            // length neighbours
+                            area[i * (k * m) + (k - 2) * m] +
+                            // width neighbours
+                            area[i * (k * m) + (k - 1) + 1]
+                    );
+                } else if (i > 0 && j == k - 1 && l == m - 1 && i < n - 1) {
+                    area[i * (k * m) + (k - 1) * m + m - 1] = 0.25f * (
+                            // height neighbours
+                            area[(i - 1) * (k * m) + (k - 1) * m + m - 1] +
+                            area[(i + 1) * (k * m) + (k - 1) * m + m - 1] +
+                            // length neighbours
+                            area[i * (k * m) + (k - 2) * m + m - 1] +
+                            // width neighbours
+                            area[i * (k * m) + (k - 1) * m + m - 2]
+                    );
                 }
             }
         }
     }
 }
 
-
-
-float *** create_area(unsigned long k, unsigned long m, unsigned long n)
-{
-    float ***area = (float ***)malloc(n * sizeof(float**));
-    if (area) {
-        for (int i = 0; i < n; ++i) {
-            area[i] = (float **)malloc(k * sizeof(float*));
-            if (area[i])
-            {
-                for (int j = 0; j < k; ++j) {
-                    area[i][j] = (float *) calloc(m, sizeof(float));
-                    if (!area[i][j]) {
-                        for (int l = 0; l < j-1; ++l) {
-                            free(area[i][l]);
-                        }
-                        for (int p = 0; p < i; ++p) {
-                            free(area[p]);
-                        }
-                        free(area);
-                        return NULL;
-                    }
-                }
-            }
-            else {
-                for (int p = 0; p < i - 1; ++p) {
-                    free(area[p]);
-                }
-                free(area);
-                return NULL;
-            }
-        }
-    } else {
-        return NULL;
-    }
-    return area;
-}
 
 void init_area(float *area,
                unsigned long k, // length
@@ -160,10 +200,11 @@ int main(int argc, char* argv[]) {
 
 
     printArray(area, k, m, n);
+    for (int i = 0; i < 1000; ++i) {
+        calculate_temperature(area, k, m, n);
+    }
 
-    //calculate_temperature(area, k, m, n);
-
-    //print3DArray(area, k, m, n);
+    printArray(area, k, m, n);
 
     exit(EXIT_SUCCESS);
 }
