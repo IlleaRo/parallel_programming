@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+#define EPSILON 0.01f
 
 void print3DArray(float ***array, unsigned long k, unsigned long m, unsigned long n) {
     for (int l = 0; l < n; ++l) {
@@ -15,146 +18,196 @@ void print3DArray(float ***array, unsigned long k, unsigned long m, unsigned lon
 
 void calculate_temperature(float ***area, unsigned long k, unsigned long m, unsigned long n)
 {
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < k - 1; ++j) {
-            for (int l = 1; l < m - 1; ++l) {
-                area[i][j][l] = 0.167f * (
+    float tmp;
+    int isStable;
+
+    do {
+        isStable = 1;
+        for (int i = 1; i < n - 1; ++i) {
+            for (int j = 1; j < k - 1; ++j) {
+                for (int l = 1; l < m - 1; ++l) {
+                    tmp = 0.167f * (
+                            // height neighbours
+                            area[i - 1][j][l] +
+                            area[i + 1][j][l] +
+                            // length neighbours
+                            area[i][j - 1][l] +
+                            area[i][j + 1][l] +
+                            // width neighbours
+                            area[i][j][l - 1] +
+                            area[i][j][l + 1]
+                    );
+                    if (fabsf(area[i][j][l] - tmp) > EPSILON) {
+                        isStable = 0;
+                    }
+                    area[i][j][l] = tmp;
+                }
+            }
+        }
+
+        //upper side n = 0
+        for (int i = 1; i < k - 1; ++i) {
+            for (int j = 1; j < m - 1; ++j) {
+                if (i == k / 2 && j == m / 2) {
+                    continue;
+                }
+                tmp = 0.2f * (
                         // height neighbours
-                        area[i - 1][j][l] +
-                        area[i + 1][j][l] +
+                        area[1][i][j] +
                         // length neighbours
-                        area[i][j - 1][l] +
-                        area[i][j + 1][l] +
+                        area[0][i - 1][j] +
+                        area[0][i + 1][j] +
                         // width neighbours
-                        area[i][j][l - 1] +
-                        area[i][j][l + 1]
+                        area[0][i][j - 1] +
+                        area[0][i][j + 1]
                 );
+                if (fabsf(area[0][i][j] - tmp) > EPSILON) {
+                    isStable = 0;
+                }
+                area[0][i][j] = tmp;
             }
         }
-    }
 
-    //upper side n = 0
-    for (int i = 1; i < k - 1; ++i) {
-        for (int j = 1; j < m - 1; ++j) {
-            if (i == k / 2 && j == m / 2) {
-                continue;
-            }
-            area[0][i][j] = 0.2f * (
-                    // height neighbours
-                    area[1][i][j] +
-                    // length neighbours
-                    area[0][i - 1][j] +
-                    area[0][i + 1][j] +
-                    // width neighbours
-                    area[0][i][j - 1] +
-                    area[0][i][j + 1]
-            );
-        }
-    }
-
-    //front side m = 0
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < k - 1; ++j) {
-            area[i][j][0] = 0.2f * (
-                    // height neighbours
-                    area[i + 1][j][0] +
-                    area[i - 1][j][0] +
-                    // length neighbours
-                    area[i][j - 1][0] +
-                    area[i][j + 1][0] +
-                    // width neighbours
-                    area[i][j][1]
-            );
-        }
-    }
-
-    //back side m = m - 1
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < k - 1; ++j) {
-            area[i][j][m - 1] = 0.2f * (
-                    // height neighbours
-                    area[i + 1][j][m - 1] +
-                    area[i - 1][j][m - 1] +
-                    // length neighbours
-                    area[i][j - 1][m - 1] +
-                    area[i][j + 1][m - 1] +
-                    // width neighbours
-                    area[i][j][m - 2]
-            );
-        }
-    }
-
-    //left side k = 0
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < m - 1; ++j) {
-            area[i][0][j] = 0.2f * (
-                    // height neighbours
-                    area[i + 1][0][j] +
-                    area[i - 1][0][j] +
-                    // length neighbours
-                    area[i][1][j] +
-                    // width neighbours
-                    area[i][0][j - 1] +
-                    area[i][0][j + 1]
-            );
-        }
-    }
-
-    //right side k = k - 1
-    for (int i = 1; i < n - 1; ++i) {
-        for (int j = 1; j < m - 1; ++j) {
-            area[i][k - 1][j] = 0.2f * (
-                    // height neighbours
-                    area[i + 1][k - 1][j] +
-                    area[i - 1][k - 1][j] +
-                    // length neighbours
-                    area[i][k - 2][j] +
-                    // width neighbours
-                    area[i][k - 1][j - 1] +
-                    area[i][k - 1][j + 1]
-            );
-        }
-    }
-
-    // edges
-    for (int i = 1; i < n - 1; ++i) {
-        area[i][0][0] = 0.25f * (
-                // height neighbours
-                area[i + 1][0][0] +
-                area[i - 1][0][0] +
-                // length neighbours
-                area[i][1][0] +
-                // width neighbours
-                area[i][0][1]
+        //front side m = 0
+        for (int i = 1; i < n - 1; ++i) {
+            for (int j = 1; j < k - 1; ++j) {
+                tmp = 0.2f * (
+                        // height neighbours
+                        area[i + 1][j][0] +
+                        area[i - 1][j][0] +
+                        // length neighbours
+                        area[i][j - 1][0] +
+                        area[i][j + 1][0] +
+                        // width neighbours
+                        area[i][j][1]
                 );
-        area[i][0][m - 1] = 0.25f * (
-                // height neighbours
-                area[i + 1][0][0] +
-                area[i - 1][0][0] +
-                // length neighbours
-                area[i][1][0] +
-                // width neighbours
-                area[i][0][m - 2]
-        );
-        area[i][k - 1][0] = 0.25f * (
-                // height neighbours
-                area[i + 1][k - 1][m - 1] +
-                area[i - 1][k - 1][m - 1] +
-                // length neighbours
-                area[i][k - 2][m - 1] +
-                // width neighbours
-                area[i][k - 1][1]
-        );
-        area[i][k - 1][m - 1] = 0.25f * (
-                // height neighbours
-                area[i + 1][k - 1][m - 1] +
-                area[i - 1][k - 1][m - 1] +
-                // length neighbours
-                area[i][k - 2][m - 1] +
-                // width neighbours
-                area[i][k - 1][m - 2]
-        );
-    }
+                if (fabsf(area[i][j][0] - tmp) > EPSILON) {
+                    isStable = 0;
+                }
+                area[i][j][0] = tmp;
+            }
+        }
+
+        //back side m = m - 1
+        for (int i = 1; i < n - 1; ++i) {
+            for (int j = 1; j < k - 1; ++j) {
+                tmp = 0.2f * (
+                        // height neighbours
+                        area[i + 1][j][m - 1] +
+                        area[i - 1][j][m - 1] +
+                        // length neighbours
+                        area[i][j - 1][m - 1] +
+                        area[i][j + 1][m - 1] +
+                        // width neighbours
+                        area[i][j][m - 2]
+                );
+                if (fabsf(area[i][j][m - 1] - tmp) > EPSILON) {
+                    isStable = 0;
+                }
+                area[i][j][m - 1] = tmp;
+            }
+        }
+
+        //left side k = 0
+        for (int i = 1; i < n - 1; ++i) {
+            for (int j = 1; j < m - 1; ++j) {
+                tmp = 0.2f * (
+                        // height neighbours
+                        area[i + 1][0][j] +
+                        area[i - 1][0][j] +
+                        // length neighbours
+                        area[i][1][j] +
+                        // width neighbours
+                        area[i][0][j - 1] +
+                        area[i][0][j + 1]
+                );
+                if (fabsf(area[i][0][j] - tmp) > EPSILON) {
+                    isStable = 0;
+                }
+                area[i][0][j] = tmp;
+            }
+        }
+
+        //right side k = k - 1
+        for (int i = 1; i < n - 1; ++i) {
+            for (int j = 1; j < m - 1; ++j) {
+                tmp = 0.2f * (
+                        // height neighbours
+                        area[i + 1][k - 1][j] +
+                        area[i - 1][k - 1][j] +
+                        // length neighbours
+                        area[i][k - 2][j] +
+                        // width neighbours
+                        area[i][k - 1][j - 1] +
+                        area[i][k - 1][j + 1]
+                );
+                if (fabsf(area[i][k - 1][j] - tmp) > EPSILON) {
+                    isStable = 0;
+                }
+                area[i][k - 1][j] = tmp;
+            }
+        }
+
+        // edges
+        for (int i = 1; i < n - 1; ++i) {
+            tmp = 0.25f * (
+                    // height neighbours
+                    area[i + 1][0][0] +
+                    area[i - 1][0][0] +
+                    // length neighbours
+                    area[i][1][0] +
+                    // width neighbours
+                    area[i][0][1]
+            );
+            if (fabsf(area[i][0][0] - tmp) > EPSILON) {
+                isStable = 0;
+            }
+            area[i][0][0] = tmp;
+
+            tmp = 0.25f * (
+                    // height neighbours
+                    area[i + 1][0][0] +
+                    area[i - 1][0][0] +
+                    // length neighbours
+                    area[i][1][0] +
+                    // width neighbours
+                    area[i][0][m - 2]
+            );
+            if (fabsf(area[i][0][m - 1] - tmp) > EPSILON) {
+                isStable = 0;
+            }
+            area[i][0][m - 1] = tmp;
+
+            tmp = 0.25f * (
+                    // height neighbours
+                    area[i + 1][k - 1][m - 1] +
+                    area[i - 1][k - 1][m - 1] +
+                    // length neighbours
+                    area[i][k - 2][m - 1] +
+                    // width neighbours
+                    area[i][k - 1][1]
+            );
+            if (fabsf(area[i][k - 1][0] - tmp) > EPSILON) {
+                isStable = 0;
+            }
+            area[i][k - 1][0] = tmp;
+
+            tmp = 0.25f * (
+                    // height neighbours
+                    area[i + 1][k - 1][m - 1] +
+                    area[i - 1][k - 1][m - 1] +
+                    // length neighbours
+                    area[i][k - 2][m - 1] +
+                    // width neighbours
+                    area[i][k - 1][m - 2]
+            );
+            if (fabsf(area[i][k - 1][m - 1] - tmp) > EPSILON) {
+                isStable = 0;
+            }
+            area[i][k - 1][m - 1] = tmp;
+
+        }
+    } while (!isStable);
 }
 
 
