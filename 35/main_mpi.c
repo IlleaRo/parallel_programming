@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <mpi/mpi.h>
+#include <unistd.h>
 
-#define EPSILON 0.01f
-
-void printArray(float *array, unsigned long k, unsigned long m, unsigned long n) {
+void printArray(float *array, int k, int m, int n) {
     for (int l = 0; l < n; ++l) {
         printf("Layer %d:\n", l + 1);
         for (int i = 0; i < k; ++i) {
@@ -16,8 +15,8 @@ void printArray(float *array, unsigned long k, unsigned long m, unsigned long n)
     }
 }
 
-void calculate_temperature(float *area, unsigned long k, unsigned long m, unsigned long n) {
-    for (int i = 0; i < n - 1; ++i) {
+void calculate_temperature(float *area, int k, int m, int n, int n_by_rank) {
+    int i = n_by_rank;
         for (int j = 0; j < k; ++j) {
             for (int l = 0; l < m; ++l) {
                 if (i > 0 && j > 0 && l > 0 && i < n - 1 && j < k - 1 && l < m - 1) {
@@ -94,7 +93,7 @@ void calculate_temperature(float *area, unsigned long k, unsigned long m, unsign
                             area[i * (k * m) + (k - 2) * m + l] +
                             // width neighbours
                             area[i * (k * m) + (k - 1) * m + l - 1] +
-                            area[i * (k * m) + (k - 1) * m + l - 1]
+                            area[i * (k * m) + (k - 1) * m + l + 1]
                     );
                 } else if (i > 0 && j == 0 && l == 0 && i < n - 1) {
                     area[i * (k * m)] = 0.25f * (
@@ -112,7 +111,7 @@ void calculate_temperature(float *area, unsigned long k, unsigned long m, unsign
                             area[(i - 1) * (k * m) + m - 1] +
                             area[(i + 1) * (k * m) + m - 1] +
                             // length neighbours
-                            area[i * (k * m) + m] +
+                            area[i * (k * m) + m + m - 1] +
                             // width neighbours
                             area[i * (k * m) + m - 2]
                     );
@@ -139,7 +138,6 @@ void calculate_temperature(float *area, unsigned long k, unsigned long m, unsign
                 }
             }
         }
-    }
 }
 
 
@@ -171,13 +169,19 @@ void init_area(float *area,
     }
 
     // All from bottom side = 0!
+    for (int i = 0; i < k; ++i) {
+        for (int j = 0; j < m; ++j) {
+            area[n * (k * m) + k * m + j] = 0;
+        }
+    }
 }
 
 
 int main(int argc, char* argv[]) {
-    unsigned long k = 5; // length
-    unsigned long m = 5; // width
-    unsigned long n = 4; // height
+    int k = 5; // length
+    int m = 6; // width
+    int n = 3; // height
+    MPI_Init(NULL, NULL);
 
     if (k < 1 || m < 1 || n < 1) {
         fprintf(stderr, "Incorrect dimensions of parallelepiped!\n");
@@ -193,18 +197,41 @@ int main(int argc, char* argv[]) {
     float T2 = 10.f;
     float T3 = 15.f;
 
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    float *area = (float *)calloc(k * m * n, sizeof(float));
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    init_area(area, k, m, n, T1, T2, T3);
+    float *area = NULL;
 
+    MPI_Win win;
+    MPI_Win_allocate_shared((int)sizeof(float) * k * m * n, sizeof(float), MPI_INFO_NULL, MPI_COMM_WORLD, &area, &win);
 
-    printArray(area, k, m, n);
-    for (int i = 0; i < 1000; ++i) {
-        calculate_temperature(area, k, m, n);
+    if (world_rank == 0) {
+        init_area(area, k, m, n, T1, T2, T3);
+        printArray(area, k, m, n);
     }
 
-    printArray(area, k, m, n);
+    int n_by_rank = world_size;
+    if (world_size % n == 0) {
+        world_size--;
+    }
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    for (int i = 0; i < 5; ++i) {
+        calculate_temperature(area, k, m, n, n_by_rank);
+        n_by_rank = (n_by_rank + world_size) % n;
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (world_rank == 0) {
+        printf("\n");
+        printArray(area, k, m, n);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    MPI_Win_free(&win);
     exit(EXIT_SUCCESS);
 }
