@@ -15,21 +15,145 @@ void print3DArray(float ***array, unsigned long k, unsigned long m, unsigned lon
 
 void calculate_temperature(float ***area, unsigned long k, unsigned long m, unsigned long n)
 {
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < k; ++j) {
-            for (int l = 0; l < m; ++l) {
-                area[n][k][m] = 0.125f * (
-                        // width neighbours
-                        area[n - 1][k][m] +
-                        area[n + 1][k][m] +
-                        // length neighbours
-                        area[n][k - 1][m] +
-                        area[n][k + 1][m] +
+    for (int i = 1; i < n - 1; ++i) {
+        for (int j = 1; j < k - 1; ++j) {
+            for (int l = 1; l < m - 1; ++l) {
+                area[i][j][l] = 0.167f * (
                         // height neighbours
-                        area[n][k][m - 1] + //
-                        );
+                        area[i - 1][j][l] +
+                        area[i + 1][j][l] +
+                        // length neighbours
+                        area[i][j - 1][l] +
+                        area[i][j + 1][l] +
+                        // width neighbours
+                        area[i][j][l - 1] +
+                        area[i][j][l + 1]
+                );
             }
         }
+    }
+
+    //upper side n = 0
+    for (int i = 1; i < k - 1; ++i) {
+        for (int j = 1; j < m - 1; ++j) {
+            if (i == k / 2 && j == m / 2) {
+                continue;
+            }
+            area[0][i][j] = 0.2f * (
+                    // height neighbours
+                    area[1][i][j] +
+                    // length neighbours
+                    area[0][i - 1][j] +
+                    area[0][i + 1][j] +
+                    // width neighbours
+                    area[0][i][j - 1] +
+                    area[0][i][j + 1]
+            );
+        }
+    }
+
+    //front side m = 0
+    for (int i = 1; i < n - 1; ++i) {
+        for (int j = 1; j < k - 1; ++j) {
+            area[i][j][0] = 0.2f * (
+                    // height neighbours
+                    area[i + 1][j][0] +
+                    area[i - 1][j][0] +
+                    // length neighbours
+                    area[i][j - 1][0] +
+                    area[i][j + 1][0] +
+                    // width neighbours
+                    area[i][j][1]
+            );
+        }
+    }
+
+    //back side m = m - 1
+    for (int i = 1; i < n - 1; ++i) {
+        for (int j = 1; j < k - 1; ++j) {
+            area[i][j][m - 1] = 0.2f * (
+                    // height neighbours
+                    area[i + 1][j][m - 1] +
+                    area[i - 1][j][m - 1] +
+                    // length neighbours
+                    area[i][j - 1][m - 1] +
+                    area[i][j + 1][m - 1] +
+                    // width neighbours
+                    area[i][j][m - 2]
+            );
+        }
+    }
+
+    //left side k = 0
+    for (int i = 1; i < n - 1; ++i) {
+        for (int j = 1; j < m - 1; ++j) {
+            area[i][0][j] = 0.2f * (
+                    // height neighbours
+                    area[i + 1][0][j] +
+                    area[i - 1][0][j] +
+                    // length neighbours
+                    area[i][1][j] +
+                    // width neighbours
+                    area[i][0][j - 1] +
+                    area[i][0][j + 1]
+            );
+        }
+    }
+
+    //right side k = k - 1
+    for (int i = 1; i < n - 1; ++i) {
+        for (int j = 1; j < m - 1; ++j) {
+            area[i][k - 1][j] = 0.2f * (
+                    // height neighbours
+                    area[i + 1][k - 1][j] +
+                    area[i - 1][k - 1][j] +
+                    // length neighbours
+                    area[i][k - 2][j] +
+                    // width neighbours
+                    area[i][k - 1][j - 1] +
+                    area[i][k - 1][j + 1]
+            );
+        }
+    }
+
+    // edges
+    for (int i = 1; i < n - 1; ++i) {
+        area[i][0][0] = 0.25f * (
+                // height neighbours
+                area[i + 1][0][0] +
+                area[i - 1][0][0] +
+                // length neighbours
+                area[i][1][0] +
+                // width neighbours
+                area[i][0][1]
+                );
+        area[i][0][m - 1] = 0.25f * (
+                // height neighbours
+                area[i + 1][0][0] +
+                area[i - 1][0][0] +
+                // length neighbours
+                area[i][1][0] +
+                // width neighbours
+                area[i][0][m - 2]
+        );
+        area[i][k - 1][0] = 0.25f * (
+                // height neighbours
+                area[i + 1][k - 1][m - 1] +
+                area[i - 1][k - 1][m - 1] +
+                // length neighbours
+                area[i][k - 2][m - 1] +
+                // width neighbours
+                area[i][k - 1][1]
+        );
+        area[i][k - 1][m - 1] = 0.25f * (
+                // height neighbours
+                area[i + 1][k - 1][m - 1] +
+                area[i - 1][k - 1][m - 1] +
+                // length neighbours
+                area[i][k - 2][m - 1] +
+                // width neighbours
+                area[i][k - 1][m - 2]
+        );
     }
 }
 
@@ -103,8 +227,8 @@ void init_area(float ***area,
 
 int main(int argc, char* argv[]) {
     unsigned long k = 5; // length
-    unsigned long m = 5; // height
-    unsigned long n = 3; // width
+    unsigned long m = 5; // width
+    unsigned long n = 4; // height
 
     if (k < 1 || m < 1 || n < 1) {
         fprintf(stderr, "Incorrect dimensions of parallelepiped!\n");
@@ -130,9 +254,11 @@ int main(int argc, char* argv[]) {
     init_area(area, k, m, n, T1, T2, T3);
 
 
-
     print3DArray(area, k, m, n);
 
+    calculate_temperature(area, k, m, n);
+
+    print3DArray(area, k, m, n);
 
     exit(EXIT_SUCCESS);
 }
